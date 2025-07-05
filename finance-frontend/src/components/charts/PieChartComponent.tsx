@@ -1,3 +1,5 @@
+'use client';
+
 import React from 'react';
 import { PieChart, Pie, Cell, Tooltip, ResponsiveContainer } from 'recharts';
 import { formatCurrency } from '@/utils/formatters';
@@ -19,7 +21,6 @@ export const PieChartComponent: React.FC<PieChartComponentProps> = ({ data }) =>
           labelLine={false}
           label={({ category, percent }) => `${category} ${((percent || 0) * 100).toFixed(0)}%`}
           outerRadius={120}
-          fill="#8884d8"
         >
           {data.map((entry, index) => (
             <Cell 

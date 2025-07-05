@@ -35,7 +35,7 @@ export interface TrendData {
   amount: number;
 }
 
-// Mock data for demonstration
+// Mock data for demonstration - will be replaced with real data
 export const MOCK_CATEGORY_DATA: CategoryData[] = [
   { category: 'Food', amount: 15000 },
   { category: 'Transport', amount: 8000 },

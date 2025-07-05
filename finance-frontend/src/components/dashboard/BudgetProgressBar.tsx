@@ -8,19 +8,19 @@ interface BudgetProgressBarProps {
   percentage: number;
 }
 
-export const BudgetProgressBar: React.FC<BudgetProgressBarProps> = ({ 
-  category, 
-  budget, 
-  actual, 
-  percentage 
+export const BudgetProgressBar: React.FC<BudgetProgressBarProps> = ({
+  category,
+  budget,
+  actual,
+  percentage
 }) => {
   const isOverBudget = percentage > 100;
   const displayPercentage = Math.min(percentage, 100);
   const overBudgetAmount = isOverBudget ? actual - budget : 0;
-  
+
   return (
-    <div className="space-y-2">
-      <div className="flex justify-between items-center">
+    <div className="space-y-3">
+      <div className="flex items-center justify-between">
         <div className="flex items-center space-x-2">
           <span className="text-sm font-medium text-gray-700">{category}</span>
           {isOverBudget && (
@@ -30,14 +30,14 @@ export const BudgetProgressBar: React.FC<BudgetProgressBarProps> = ({
           )}
         </div>
         <span className={`text-sm font-medium ${isOverBudget ? 'text-red-600' : 'text-gray-500'}`}>
-          {percentage}%
+          {percentage.toFixed(1)}%
         </span>
       </div>
       
       <div className="relative">
         {/* Main progress bar */}
         <div className="w-full bg-gray-200 rounded-full h-3">
-          <div 
+          <div
             className={`h-3 rounded-full transition-all duration-500 ${
               isOverBudget ? 'bg-red-500' : 
               percentage > 90 ? 'bg-red-500' : 
