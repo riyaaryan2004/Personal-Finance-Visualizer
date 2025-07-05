@@ -1,287 +1,531 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { formatCurrency, formatDate } from '@/utils/formatters';
+import { LoadingSpinner } from '@/components/ui/LoadingSpinner';
+import { formatCurrency } from '@/utils/formatters';
+import { apiService } from '@/services/api';
 import { 
-  DEMO_TRANSACTIONS, 
-  DEMO_BUDGETS, 
-  DEMO_CATEGORIES,
-  Transaction,
-  Budget
-} from '@/constants/data';
-import { PieChartComponent } from '@/components/charts/PieChartComponent';
-import { BarChartComponent } from '@/components/charts/BarChartComponent';
-import { AreaChartComponent } from '@/components/charts/AreaChartComponent';
+  getCurrentMonth, 
+  getMonthOptions, 
+  getYearOptions,
+  formatMonthYear,
+  formatPeriodLabel,
+  filterTransactionsByMonth,
+  filterTransactionsByYear
+} from '@/utils/dateUtils';
 import { 
+  BarChart3, 
+  PieChart, 
   TrendingUp, 
   TrendingDown, 
   Calendar,
-  BarChart3,
+  Wallet,
   Target,
-  DollarSign
+  Activity,
+  Zap,
+  Lightbulb,
+  Plus
 } from 'lucide-react';
+import { CATEGORIES } from '@/constants/data';
+
+interface AnalyticsData {
+  overview: {
+    totalExpenses: number;
+    transactionCount: number;
+  };
+  categoryBreakdown: Array<{
+    category: string;
+    amount: number;
+    percentage: number;
+  }>;
+  budgetVsActual: Array<{
+    category: string;
+    budget: number;
+    actual: number;
+    percentage?: number;
+  }>;
+  monthlyTrends: Array<{
+    month: string;
+    expenses: number;
+  }>;
+}
 
 const AnalyticsPage = () => {
-  const [transactions] = useState<Transaction[]>(DEMO_TRANSACTIONS);
-  const [budgets] = useState<Budget[]>(DEMO_BUDGETS);
-  const [selectedPeriod, setSelectedPeriod] = useState('month');
+  const [selectedMonth, setSelectedMonth] = useState(getCurrentMonth());
+  const [selectedYear, setSelectedYear] = useState(new Date().getFullYear());
+  const [filterType, setFilterType] = useState<'month' | 'quarter' | 'year'>('month');
+  const [analyticsData, setAnalyticsData] = useState<AnalyticsData | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
-  // Calculate analytics data
-  const totalIncome = transactions
-    .filter(t => t.type === 'income')
-    .reduce((sum, t) => sum + t.amount, 0);
-
-  const totalExpense = transactions
-    .filter(t => t.type === 'expense')
-    .reduce((sum, t) => sum + t.amount, 0);
-
-  const balance = totalIncome - totalExpense;
-
-  // Category-wise expense breakdown
-  const categoryExpenses = DEMO_CATEGORIES
-    .filter(cat => cat.type === 'expense')
-    .map(category => {
-      const total = transactions
-        .filter(t => t.category === category.name && t.type === 'expense')
-        .reduce((sum, t) => sum + t.amount, 0);
+  // Load analytics data from API
+  const loadAnalyticsData = useCallback(async (period: string) => {
+    setIsLoading(true);
+    setError(null);
+    
+    try {
+      let trendsRes;
       
-      return {
-        category: category.name,
-        amount: total,
-        color: category.color,
-        icon: category.icon
-      };
-    })
-    .filter(item => item.amount > 0)
-    .sort((a, b) => b.amount - a.amount);
+      // Call appropriate trends API based on filter type
+      switch (filterType) {
+        case 'month':
+          trendsRes = await apiService.getMonthlyTrends(6);
+          break;
+        case 'quarter':
+          trendsRes = await apiService.getQuarterlyTrends(6);
+          break;
+        case 'year':
+          trendsRes = await apiService.getYearlyTrends(6);
+          break;
+        default:
+          trendsRes = await apiService.getMonthlyTrends(6);
+      }
 
-  // Monthly trend data
-  const monthlyData = [
-    { month: 'Jan', income: 50000, expense: 45000 },
-    { month: 'Feb', income: 52000, expense: 48000 },
-    { month: 'Mar', income: 48000, expense: 52000 },
-    { month: 'Apr', income: 55000, expense: 49000 },
-    { month: 'May', income: 51000, expense: 47000 },
-    { month: 'Jun', income: 54000, expense: 51000 },
-    { month: 'Jul', income: 50000, expense: 48000 }
-  ];
+      const [overviewRes, categoryRes, budgetRes] = await Promise.all([
+        apiService.getOverview(period),
+        apiService.getCategoryBreakdown(period),
+        apiService.getBudgetVsActual(period)
+      ]);
 
-  // Budget performance
-  const budgetPerformance = budgets.map(budget => {
-    const percentage = (budget.spent / budget.budget) * 100;
-    return {
-      category: budget.category,
-      budget: budget.budget,
-      spent: budget.spent,
-      percentage: percentage,
-      status: percentage > 100 ? 'over' : percentage > 90 ? 'warning' : 'good'
+      if (overviewRes.error || categoryRes.error || budgetRes.error || trendsRes.error) {
+        setError('Failed to load analytics data');
+        return;
+      }
+
+      setAnalyticsData({
+        overview: overviewRes.data || {
+          totalExpenses: 0,
+          transactionCount: 0
+        },
+        categoryBreakdown: categoryRes.data || [],
+        budgetVsActual: budgetRes.data || [],
+        monthlyTrends: trendsRes.data || []
+      });
+    } catch (error) {
+      console.error('Error loading analytics data:', error);
+      setError('Failed to load analytics data');
+    } finally {
+      setIsLoading(false);
+    }
+  }, [filterType]);
+
+  useEffect(() => {
+    const period = filterType === 'month' ? selectedMonth : selectedYear.toString();
+    loadAnalyticsData(period);
+  }, [selectedMonth, selectedYear, filterType, loadAnalyticsData]);
+
+  // Memoized calculations
+  const { avgTransaction, topCategory } = useMemo(() => {
+    if (!analyticsData?.overview) return {
+      avgTransaction: 0,
+      topCategory: null
     };
-  });
+    
+    const { totalExpenses, transactionCount } = analyticsData.overview;
+    const avgTransaction = transactionCount > 0 ? totalExpenses / transactionCount : 0;
+    
+    const topCategory = analyticsData.categoryBreakdown.length > 0 
+      ? analyticsData.categoryBreakdown[0] 
+      : null;
+    
+    return { avgTransaction, topCategory };
+  }, [analyticsData]);
 
-  // Payment method distribution
-  const paymentMethods = transactions.reduce((acc, transaction) => {
-    acc[transaction.paymentMethod] = (acc[transaction.paymentMethod] || 0) + 1;
-    return acc;
-  }, {} as Record<string, number>);
+  const handlePeriodChange = useCallback((period: string) => {
+    if (filterType === 'month') {
+      setSelectedMonth(period);
+    } else {
+      setSelectedYear(Number(period));
+    }
+  }, [filterType]);
 
-  const paymentMethodData = Object.entries(paymentMethods).map(([method, count]) => ({
-    category: method,
-    amount: count
-  }));
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-slate-50 to-gray-100 flex items-center justify-center">
+        <LoadingSpinner size="lg" />
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-slate-50 to-gray-100 flex items-center justify-center">
+        <div className="text-center">
+          <p className="text-red-600 mb-4">{error}</p>
+          <button
+            onClick={() => loadAnalyticsData(filterType === 'month' ? selectedMonth : selectedYear.toString())}
+            className="bg-indigo-600 text-white px-4 py-2 rounded-lg hover:bg-indigo-700"
+          >
+            Retry
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 to-gray-100">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {/* Header */}
-        <div className="mb-8">
-          <h1 className="text-3xl font-bold text-gray-900 mb-2">Analytics & Reports</h1>
-          <p className="text-gray-600">Detailed insights into your financial patterns</p>
-        </div>
-
-        {/* Period Selector */}
-        <Card className="mb-6">
-          <CardContent className="p-4">
+      {/* Header */}
+      <div className="bg-white shadow-sm border-b">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex items-center justify-between h-16">
+            <div className="flex items-center space-x-3">
+              <div className="bg-indigo-100 p-2 rounded-lg">
+                <BarChart3 className="h-6 w-6 text-indigo-600" />
+              </div>
+              <h1 className="text-2xl font-bold text-gray-900">Analytics</h1>
+            </div>
+            {/* Period Selector */}
             <div className="flex items-center space-x-4">
-              <Calendar className="h-5 w-5 text-gray-500" />
-              <span className="text-sm font-medium text-gray-700">Time Period:</span>
+              <div className="flex items-center space-x-2">
+                <Calendar className="h-5 w-5 text-gray-500" />
+                <div className="flex space-x-2">
+                  <button
+                    onClick={() => setFilterType('month')}
+                    className={`px-3 py-1 rounded-lg text-sm font-medium transition-colors ${
+                      filterType === 'month' 
+                        ? 'bg-indigo-100 text-indigo-700' 
+                        : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                    }`}
+                  >
+                    Monthly
+                  </button>
+                  <button
+                    onClick={() => setFilterType('quarter')}
+                    className={`px-3 py-1 rounded-lg text-sm font-medium transition-colors ${
+                      filterType === 'quarter' 
+                        ? 'bg-indigo-100 text-indigo-700' 
+                        : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                    }`}
+                  >
+                    Quarterly
+                  </button>
+                  <button
+                    onClick={() => setFilterType('year')}
+                    className={`px-3 py-1 rounded-lg text-sm font-medium transition-colors ${
+                      filterType === 'year' 
+                        ? 'bg-indigo-100 text-indigo-700' 
+                        : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                    }`}
+                  >
+                    Yearly
+                  </button>
+                </div>
+              </div>
               <select
-                value={selectedPeriod}
-                onChange={(e) => setSelectedPeriod(e.target.value)}
-                className="px-3 py-1 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500"
+                value={filterType === 'month' ? selectedMonth : selectedYear}
+                onChange={(e) => handlePeriodChange(e.target.value)}
+                className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500"
               >
-                <option value="week">This Week</option>
-                <option value="month">This Month</option>
-                <option value="quarter">This Quarter</option>
-                <option value="year">This Year</option>
+                {filterType === 'month' ? (
+                  getMonthOptions().map(month => (
+                    <option key={month} value={month}>
+                      {formatMonthYear(month)}
+                    </option>
+                  ))
+                ) : (
+                  getYearOptions().map(year => (
+                    <option key={year} value={year}>
+                      {year}
+                    </option>
+                  ))
+                )}
               </select>
             </div>
-          </CardContent>
-        </Card>
-
-        {/* Key Metrics */}
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
-          <Card className="bg-gradient-to-r from-green-500 to-green-600 text-white">
-            <CardContent className="p-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-green-100 text-sm font-medium">Total Income</p>
-                  <p className="text-2xl font-bold">{formatCurrency(totalIncome)}</p>
-                  <p className="text-green-100 text-sm">+12% from last month</p>
+          </div>
+        </div>
+      </div>
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        {/* Enhanced Analytics Dashboard */}
+        <div className="space-y-8">
+          {/* Quick Stats */}
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+            <Card className="bg-gradient-to-br from-blue-500 to-blue-600 text-white">
+              <CardContent className="p-4">
+                <div className="text-center">
+                  <TrendingUp className="h-8 w-8 mx-auto mb-2 opacity-80" />
+                  <p className="text-blue-100 text-xs">Total Periods</p>
+                  <p className="text-2xl font-bold">
+                    {analyticsData?.monthlyTrends?.length ?? 0}
+                  </p>
                 </div>
-                <div className="bg-white/20 p-3 rounded-full">
-                  <TrendingUp className="h-6 w-6" />
+              </CardContent>
+            </Card>
+            <Card className="bg-gradient-to-br from-green-500 to-green-600 text-white">
+              <CardContent className="p-4">
+                <div className="text-center">
+                  <Wallet className="h-8 w-8 mx-auto mb-2 opacity-80" />
+                  <p className="text-green-100 text-xs">Total Spent</p>
+                  <p className="text-2xl font-bold">
+                    {formatCurrency(
+                      analyticsData?.monthlyTrends?.reduce((sum, t) => sum + t.expenses, 0) ?? 0
+                    )}
+                  </p>
+                </div>
+              </CardContent>
+            </Card>
+            <Card className="bg-gradient-to-br from-purple-500 to-purple-600 text-white">
+              <CardContent className="p-4">
+                <div className="text-center">
+                  <Target className="h-8 w-8 mx-auto mb-2 opacity-80" />
+                  <p className="text-purple-100 text-xs">
+                    Avg {filterType === 'month' ? 'Monthly' : filterType === 'quarter' ? 'Quarterly' : 'Yearly'}
+                  </p>
+                  <p className="text-2xl font-bold">
+                    {formatCurrency(
+                      analyticsData?.monthlyTrends && analyticsData.monthlyTrends.length
+                        ? analyticsData.monthlyTrends.reduce((sum, t) => sum + t.expenses, 0) / analyticsData.monthlyTrends.length
+                        : 0
+                    )}
+                  </p>
+                </div>
+              </CardContent>
+            </Card>
+            <Card className="bg-gradient-to-br from-orange-500 to-orange-600 text-white">
+              <CardContent className="p-4">
+                <div className="text-center">
+                  <BarChart3 className="h-8 w-8 mx-auto mb-2 opacity-80" />
+                  <p className="text-orange-100 text-xs">Trend</p>
+                  <p className="text-2xl font-bold">
+                    {analyticsData?.monthlyTrends && analyticsData.monthlyTrends.length > 1 
+                      ? (() => {
+                          const recent = analyticsData.monthlyTrends.slice(-2);
+                          const change = ((recent[1]?.expenses || 0) - (recent[0]?.expenses || 0)) / ((recent[0]?.expenses || 1)) * 100;
+                          return change > 0 ? `+${change.toFixed(1)}%` : `${change.toFixed(1)}%`;
+                        })()
+                      : 'N/A'
+                    }
+                  </p>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+          {/* Spending Trends */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center space-x-2">
+                <Activity className="h-5 w-5 text-indigo-600" />
+                <span>Spending Trends</span>
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="flex items-center justify-between mb-6">
+                <div className="flex items-center space-x-4">
+                  <label className="font-medium text-gray-700">View Period:</label>
+                  <div className="flex space-x-2">
+                    <button
+                      onClick={() => setFilterType('month')}
+                      className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+                        filterType === 'month' 
+                          ? 'bg-indigo-600 text-white' 
+                          : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                      }`}
+                    >
+                      Monthly
+                    </button>
+                    <button
+                      onClick={() => setFilterType('quarter')}
+                      className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+                        filterType === 'quarter' 
+                          ? 'bg-indigo-600 text-white' 
+                          : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                      }`}
+                    >
+                      Quarterly
+                    </button>
+                    <button
+                      onClick={() => setFilterType('year')}
+                      className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+                        filterType === 'year' 
+                          ? 'bg-indigo-600 text-white' 
+                          : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                      }`}
+                    >
+                      Yearly
+                    </button>
+                  </div>
+                </div>
+                <div className="flex items-center space-x-2">
+                  <span className="text-sm text-gray-500">
+                    Last 6 {filterType === 'month' ? 'months' : filterType === 'quarter' ? 'quarters' : 'years'}
+                  </span>
+                  <div className="w-2 h-2 bg-indigo-500 rounded-full"></div>
                 </div>
               </div>
-            </CardContent>
-          </Card>
-
-          <Card className="bg-gradient-to-r from-red-500 to-red-600 text-white">
-            <CardContent className="p-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-red-100 text-sm font-medium">Total Expenses</p>
-                  <p className="text-2xl font-bold">{formatCurrency(totalExpense)}</p>
-                  <p className="text-red-100 text-sm">+8% from last month</p>
-                </div>
-                <div className="bg-white/20 p-3 rounded-full">
-                  <TrendingDown className="h-6 w-6" />
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card className="bg-gradient-to-r from-blue-500 to-blue-600 text-white">
-            <CardContent className="p-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-blue-100 text-sm font-medium">Net Balance</p>
-                  <p className="text-2xl font-bold">{formatCurrency(balance)}</p>
-                  <p className="text-blue-100 text-sm">+4% from last month</p>
-                </div>
-                <div className="bg-white/20 p-3 rounded-full">
-                  <DollarSign className="h-6 w-6" />
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card className="bg-gradient-to-r from-purple-500 to-purple-600 text-white">
-            <CardContent className="p-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-purple-100 text-sm font-medium">Savings Rate</p>
-                  <p className="text-2xl font-bold">{((balance / totalIncome) * 100).toFixed(1)}%</p>
-                  <p className="text-purple-100 text-sm">Target: 20%</p>
-                </div>
-                <div className="bg-white/20 p-3 rounded-full">
-                  <Target className="h-6 w-6" />
-                </div>
+              <div className="space-y-4">
+                {/* Enhanced Trends Display */}
+                {analyticsData?.monthlyTrends && analyticsData.monthlyTrends.length > 0 ? (
+                  <div className="space-y-6">
+                    {/* Summary Cards */}
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                      <div className="bg-gradient-to-r from-blue-500 to-blue-600 text-white p-4 rounded-lg">
+                        <div className="text-center">
+                          <p className="text-blue-100 text-sm">Average {filterType === 'month' ? 'Monthly' : filterType === 'quarter' ? 'Quarterly' : 'Yearly'}</p>
+                          <p className="text-2xl font-bold">
+                            {formatCurrency(
+                              analyticsData.monthlyTrends.reduce((sum, t) => sum + t.expenses, 0) / 
+                              analyticsData.monthlyTrends.length
+                            )}
+                          </p>
+                        </div>
+                      </div>
+                      
+                      <div className="bg-gradient-to-r from-green-500 to-green-600 text-white p-4 rounded-lg">
+                        <div className="text-center">
+                          <p className="text-green-100 text-sm">Lowest {filterType === 'month' ? 'Month' : filterType === 'quarter' ? 'Quarter' : 'Year'}</p>
+                          <p className="text-2xl font-bold">
+                            {formatCurrency(
+                              Math.min(...analyticsData.monthlyTrends.map(t => t.expenses))
+                            )}
+                          </p>
+                        </div>
+                      </div>
+                      
+                      <div className="bg-gradient-to-r from-red-500 to-red-600 text-white p-4 rounded-lg">
+                        <div className="text-center">
+                          <p className="text-red-100 text-sm">Highest {filterType === 'month' ? 'Month' : filterType === 'quarter' ? 'Quarter' : 'Year'}</p>
+                          <p className="text-2xl font-bold">
+                            {formatCurrency(
+                              Math.max(...analyticsData.monthlyTrends.map(t => t.expenses))
+                            )}
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+                    {/* Trends Chart */}
+                    <div className="bg-white p-6 rounded-lg border">
+                      <h3 className="text-lg font-semibold mb-4">Spending Trend</h3>
+                      <div className="space-y-3">
+                        {analyticsData.monthlyTrends.map((trend, idx) => {
+                          const maxExpense = Math.max(...analyticsData.monthlyTrends.map(t => t.expenses));
+                          const percentage = (trend.expenses / maxExpense) * 100;
+                          return (
+                            <div key={idx} className="space-y-2">
+                              <div className="flex items-center justify-between">
+                                <span className="font-medium text-gray-700">
+                                  {formatPeriodLabel(trend.month)}
+                                </span>
+                                <span className="font-semibold text-gray-900">
+                                  {formatCurrency(trend.expenses)}
+                                </span>
+                              </div>
+                              <div className="w-full bg-gray-200 rounded-full h-3">
+                                <div 
+                                  className="bg-gradient-to-r from-indigo-500 to-purple-600 h-3 rounded-full transition-all duration-300"
+                                  style={{ width: `${percentage}%` }}
+                                />
+                              </div>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </div>
+                    {/* Insights */}
+                    <div className="bg-gradient-to-r from-indigo-50 to-purple-50 p-6 rounded-lg border">
+                      <h3 className="text-lg font-semibold mb-4 text-gray-800">Trend Insights</h3>
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-6 text-sm">
+                        <div className="space-y-3">
+                          <div className="flex items-center space-x-2">
+                            <span className="text-green-500">📈</span>
+                            <span>Average {filterType === 'month' ? 'monthly' : filterType === 'quarter' ? 'quarterly' : 'yearly'} spending: <strong>{formatCurrency(
+                              analyticsData.monthlyTrends.reduce((sum, t) => sum + t.expenses, 0) / 
+                              analyticsData.monthlyTrends.length
+                            )}</strong></span>
+                          </div>
+                          <div className="flex items-center space-x-2">
+                            <span className="text-blue-500">💰</span>
+                            <span>Total spent in {analyticsData.monthlyTrends.length} {filterType === 'month' ? 'months' : filterType === 'quarter' ? 'quarters' : 'years'}: <strong>{formatCurrency(
+                              analyticsData.monthlyTrends.reduce((sum, t) => sum + t.expenses, 0)
+                            )}</strong></span>
+                          </div>
+                          <div className="flex items-center space-x-2">
+                            <span className="text-purple-500">📊</span>
+                            <span>Spending variance: <strong>{(() => {
+                              const amounts = analyticsData.monthlyTrends.map(t => t.expenses);
+                              const avg = amounts.reduce((sum, val) => sum + val, 0) / amounts.length;
+                              const variance = amounts.reduce((sum, val) => sum + Math.pow(val - avg, 2), 0) / amounts.length;
+                              return formatCurrency(Math.sqrt(variance));
+                            })()}</strong></span>
+                          </div>
+                          <div className="flex items-center space-x-2">
+                            <span className="text-orange-500">🎯</span>
+                            <span>Lowest {filterType === 'month' ? 'month' : filterType === 'quarter' ? 'quarter' : 'year'}: <strong>{formatPeriodLabel(
+                              analyticsData.monthlyTrends.find(t => 
+                                t.expenses === Math.min(...analyticsData.monthlyTrends.map(t => t.expenses))
+                              )?.month || ''
+                            )}</strong></span>
+                          </div>
+                          <div className="flex items-center space-x-2">
+                            <span className="text-red-500">⚠️</span>
+                            <span>Highest {filterType === 'month' ? 'month' : filterType === 'quarter' ? 'quarter' : 'year'}: <strong>{formatPeriodLabel(
+                              analyticsData.monthlyTrends.find(t => 
+                                t.expenses === Math.max(...analyticsData.monthlyTrends.map(t => t.expenses))
+                              )?.month || ''
+                            )}</strong></span>
+                          </div>
+                        </div>
+                        <div className="space-y-3">
+                          <div className="flex items-center space-x-2">
+                            <span className="text-indigo-500">📈</span>
+                            <span>Growth trend: <strong>{(() => {
+                              if (analyticsData.monthlyTrends.length < 2) return 'N/A';
+                              const recent = analyticsData.monthlyTrends.slice(-2);
+                              const change = ((recent[1]?.expenses || 0) - (recent[0]?.expenses || 0)) / (recent[0]?.expenses || 1) * 100;
+                              return change > 0 ? `+${change.toFixed(1)}%` : `${change.toFixed(1)}%`;
+                            })()}</strong></span>
+                          </div>
+                          <div className="flex items-center space-x-2">
+                            <span className="text-teal-500">📅</span>
+                            <span>Consistent periods: <strong>{(() => {
+                              const amounts = analyticsData.monthlyTrends.map(t => t.expenses);
+                              const avg = amounts.reduce((sum, val) => sum + val, 0) / amounts.length;
+                              const consistent = amounts.filter(amount => Math.abs(amount - avg) / avg < 0.2).length;
+                              return `${consistent} of ${amounts.length}`;
+                            })()}</strong></span>
+                          </div>
+                          <div className="flex items-center space-x-2">
+                            <span className="text-yellow-500">💡</span>
+                            <span>Recommendation: <strong>{(() => {
+                              const amounts = analyticsData.monthlyTrends.map(t => t.expenses);
+                              const avg = amounts.reduce((sum, val) => sum + val, 0) / amounts.length;
+                              const recent = amounts[amounts.length - 1];
+                              if (recent > avg * 1.2) return 'Consider reducing expenses';
+                              if (recent < avg * 0.8) return 'Good spending control';
+                              return 'Maintain current spending';
+                            })()}</strong></span>
+                          </div>
+                          <div className="flex items-center space-x-2">
+                            <span className="text-pink-500">🎯</span>
+                            <span>Target for next {filterType === 'month' ? 'month' : filterType === 'quarter' ? 'quarter' : 'year'}: <strong>{formatCurrency(
+                              analyticsData.monthlyTrends.reduce((sum, t) => sum + t.expenses, 0) / 
+                              analyticsData.monthlyTrends.length * 0.9
+                            )}</strong></span>
+                          </div>
+                          <div className="flex items-center space-x-2">
+                            <span className="text-emerald-500">📊</span>
+                            <span>Savings potential: <strong>{formatCurrency(
+                              analyticsData.monthlyTrends.reduce((sum, t) => sum + t.expenses, 0) / 
+                              analyticsData.monthlyTrends.length * 0.1
+                            )}</strong></span>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="text-center py-8">
+                    <div className="text-gray-400 mb-4">
+                      <BarChart3 className="h-16 w-16 mx-auto" />
+                    </div>
+                    <p className="text-gray-500 text-lg font-medium">No trend data available</p>
+                    <p className="text-gray-400 text-sm">Add some transactions to see your spending trends</p>
+                  </div>
+                )}
               </div>
             </CardContent>
           </Card>
         </div>
-
-        {/* Charts Section */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
-          <Card className="shadow-lg">
-            <CardHeader>
-              <CardTitle className="flex items-center space-x-2">
-                <BarChart3 className="h-5 w-5 text-indigo-600" />
-                <span>Expense by Category</span>
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <PieChartComponent data={categoryExpenses} />
-            </CardContent>
-          </Card>
-
-          <Card className="shadow-lg">
-            <CardHeader>
-              <CardTitle className="flex items-center space-x-2">
-                <BarChart3 className="h-5 w-5 text-indigo-600" />
-                <span>Payment Method Distribution</span>
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <BarChartComponent data={paymentMethodData} />
-            </CardContent>
-          </Card>
-        </div>
-
-        {/* Monthly Trend */}
-        <Card className="mb-8 shadow-lg">
-          <CardHeader>
-            <CardTitle className="flex items-center space-x-2">
-              <TrendingUp className="h-5 w-5 text-indigo-600" />
-              <span>Monthly Income vs Expenses</span>
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="h-80">
-              <AreaChartComponent data={monthlyData} />
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Budget Performance */}
-        <Card className="shadow-lg">
-          <CardHeader>
-            <CardTitle className="flex items-center space-x-2">
-              <Target className="h-5 w-5 text-indigo-600" />
-              <span>Budget Performance</span>
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-4">
-              {budgetPerformance.map((budget, index) => (
-                <div key={index} className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
-                  <div className="flex items-center space-x-4">
-                    <div className="w-10 h-10 rounded-full flex items-center justify-center text-white font-semibold"
-                         style={{ backgroundColor: DEMO_CATEGORIES.find(c => c.name === budget.category)?.color || '#6b7280' }}>
-                      {DEMO_CATEGORIES.find(c => c.name === budget.category)?.icon || '📦'}
-                    </div>
-                    <div>
-                      <p className="font-medium text-gray-900">{budget.category}</p>
-                      <p className="text-sm text-gray-500">
-                        {formatCurrency(budget.spent)} / {formatCurrency(budget.budget)}
-                      </p>
-                    </div>
-                  </div>
-                  
-                  <div className="text-right">
-                    <div className="flex items-center space-x-2">
-                      <span className={`text-sm font-medium ${
-                        budget.status === 'over' ? 'text-red-600' :
-                        budget.status === 'warning' ? 'text-yellow-600' : 'text-green-600'
-                      }`}>
-                        {budget.percentage.toFixed(1)}%
-                      </span>
-                      <span className={`px-2 py-1 text-xs rounded-full ${
-                        budget.status === 'over' ? 'bg-red-100 text-red-800' :
-                        budget.status === 'warning' ? 'bg-yellow-100 text-yellow-800' : 'bg-green-100 text-green-800'
-                      }`}>
-                        {budget.status === 'over' ? 'Over Budget' :
-                         budget.status === 'warning' ? 'Warning' : 'On Track'}
-                      </span>
-                    </div>
-                    
-                    {/* Progress Bar */}
-                    <div className="w-32 bg-gray-200 rounded-full h-2 mt-2">
-                      <div 
-                        className={`h-2 rounded-full transition-all duration-500 ${
-                          budget.status === 'over' ? 'bg-red-500' :
-                          budget.status === 'warning' ? 'bg-yellow-500' : 'bg-green-500'
-                        }`}
-                        style={{ width: `${Math.min(budget.percentage, 100)}%` }}
-                      />
-                    </div>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </CardContent>
-        </Card>
       </div>
     </div>
   );
