@@ -9,14 +9,14 @@ function getMonthRange(monthStr) {
   return { start, end };
 }
 
-// GET /api/summary/overview?userId=xyz&month=2025-07
+// GET /api/summary/overview?month=2025-07
 exports.getOverview = async (req, res) => {
   try {
-    const { userId, month } = req.query;
-    if (!userId || !month) return res.status(400).json({ error: 'userId and month required' });
+    const { month } = req.query;
+    if (!month) return res.status(400).json({ error: 'month is required' });
 
     const { start, end } = getMonthRange(month);
-    const transactions = await Transaction.find({ userId, date: { $gte: start, $lt: end } }).sort({ date: -1 });
+    const transactions = await Transaction.find({ date: { $gte: start, $lt: end } }).sort({ date: -1 });
 
     const totalExpenses = transactions.reduce((sum, t) => sum + t.amount, 0);
     const recentTransactions = transactions.slice(0, 5);
@@ -27,14 +27,14 @@ exports.getOverview = async (req, res) => {
   }
 };
 
-// GET /api/summary/category?userId=xyz&month=2025-07
+// GET /api/summary/category?month=2025-07
 exports.getCategoryBreakdown = async (req, res) => {
   try {
-    const { userId, month } = req.query;
-    if (!userId || !month) return res.status(400).json({ error: 'userId and month required' });
+    const { month } = req.query;
+    if (!month) return res.status(400).json({ error: 'month is required' });
 
     const { start, end } = getMonthRange(month);
-    const transactions = await Transaction.find({ userId, date: { $gte: start, $lt: end } });
+    const transactions = await Transaction.find({ date: { $gte: start, $lt: end } });
 
     const categoryTotals = {};
     transactions.forEach((t) => {
@@ -48,15 +48,15 @@ exports.getCategoryBreakdown = async (req, res) => {
   }
 };
 
-// GET /api/summary/budget-vs-actual?userId=xyz&month=2025-07
+// GET /api/summary/budget-vs-actual?month=2025-07
 exports.getBudgetVsActual = async (req, res) => {
   try {
-    const { userId, month } = req.query;
-    if (!userId || !month) return res.status(400).json({ error: 'userId and month required' });
+    const { month } = req.query;
+    if (!month) return res.status(400).json({ error: 'month is required' });
 
     const { start, end } = getMonthRange(month);
-    const budgets = await Budget.find({ userId, month });
-    const transactions = await Transaction.find({ userId, date: { $gte: start, $lt: end } });
+    const budgets = await Budget.find({ month });
+    const transactions = await Transaction.find({ date: { $gte: start, $lt: end } });
 
     const actuals = {};
     transactions.forEach((t) => {

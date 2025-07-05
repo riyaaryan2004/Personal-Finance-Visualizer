@@ -1,10 +1,9 @@
 const mongoose = require('mongoose');
 
 const budgetSchema = new mongoose.Schema({
-  userId: { type: String, required: true },
   category: {
     type: String,
-    enum: ['Food', 'Rent', 'Transport', 'Entertainment', 'Other'],
+    enum: ['Food', 'Rent', 'Transport', 'Utilities','Health', 'Shopping','Entertainment', 'Other'],
     required: true,
   },
   amount: { type: Number, required: true },

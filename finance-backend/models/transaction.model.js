@@ -1,13 +1,12 @@
 const mongoose = require('mongoose');
 
 const transactionSchema = new mongoose.Schema({
-  userId: { type: String, required: true },
   amount: { type: Number, required: true },
   description: { type: String },
   date: { type: Date, required: true },
   category: {
     type: String,
-    enum: ['Food', 'Rent', 'Transport', 'Entertainment', 'Other'],
+    enum: ['Food', 'Rent', 'Transport', 'Utilities','Health', 'Shopping','Entertainment', 'Other'],
     required: true,
   },
 }, { timestamps: true });

@@ -3,9 +3,7 @@ const Budget = require('../models/budget.model');
 // GET /api/budgets?userId=abc123
 exports.getBudgets = async (req, res) => {
   try {
-    const { userId } = req.query;
-    if (!userId) return res.status(400).json({ error: 'UserId is required' });
-
+  
     const budgets = await Budget.find({ userId }).sort({ month: 1 });
     res.json(budgets);
   } catch (err) {
