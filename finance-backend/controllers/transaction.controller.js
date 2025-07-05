@@ -3,7 +3,7 @@ const Transaction = require('../models/transaction.model');
 // GET /api/transactions
 exports.getTransactions = async (req, res) => {
   try {
-    const data = await Transaction.find(); // Removed userId filtering
+    const data = await Transaction.find().sort({ date: -1 }); // Sort by date, most recent first
     res.json(data);
   } catch (err) {
     res.status(500).json({ message: 'Error fetching transactions', error: err });
