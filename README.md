@@ -1,243 +1,69 @@
-# Personal Finance Visualizer
+# 💰 Personal Finance Visualizer
 
-A modern, full-stack web application for tracking personal finances with beautiful visualizations, comprehensive analytics, and real-time data management.
+A modern, responsive finance tracker built with **Next.js**, **React**, **shadcn/ui**, **Recharts**, and **MongoDB** to help users manage their personal finances with visual insights.
 
-## 🚀 Features
+![Personal Finance Visualizer](Screenshots/Home.png)
 
-### 📊 Dashboard
-- **Overview Metrics**: Total expenses, budget utilization, top categories, transaction count
-- **Interactive Charts**: Pie charts for category breakdown, bar charts for monthly expenses
-- **Budget Progress**: Visual progress bars with over-budget indicators
-- **Recent Transactions**: Latest transaction history with category icons
+## 🚀 Submission Summary
 
-### 💳 Transaction Management
-- **CRUD Operations**: Create, Read, Update, Delete transactions
-- **Advanced Filtering**: Search by description, filter by category and date ranges
-- **Real-time Analytics**: Expense tracking with balance calculation
-- **Transaction Categories**: Support for various expense categories
-- **Date-based Sorting**: Transactions sorted by date with most recent first
+- ✅ Submission Stage: **Stage 3**
+- ✅ Fully responsive design
+- ✅ No authentication (per guidelines)
 
-### 🎯 Budget Management
-- **Budget Creation**: Set budgets for different categories with date ranges
-- **Progress Tracking**: Visual progress bars with status indicators
-- **Over-budget Alerts**: Clear warnings when spending exceeds budget
-- **Status Management**: Active, completed, and overdue budget statuses
+## ✅ Features by Stage
 
-### 📈 Analytics & Reports
-- **Financial Overview**: Total expenses, transaction counts, spending insights
-- **Category Analysis**: Detailed breakdown of spending by category
-- **Monthly Trends**: Expense trends over time with quarterly/yearly views
-- **Budget Performance**: Performance tracking for all budgets
-- **Spending Insights**: Smart analysis and recommendations
+### 🔹 Stage 1 – Basic Transaction Tracking
+- Add, edit, and delete transactions (amount, date, description)
+- Transaction list view
+- Monthly expenses bar chart
+- Basic form validation
 
-## 🛠️ Technology Stack
+### 🔹 Stage 2 – Categories
+- Predefined categories
+- Category-wise pie chart
+- Dashboard: total expenses, category breakdown, latest transactions
 
-### Frontend
-- **Framework**: Next.js 14 with TypeScript
-- **Styling**: Tailwind CSS
-- **Charts**: Recharts for data visualization
-- **Icons**: Lucide React
-- **State Management**: React Hooks
-- **Routing**: Next.js App Router
+### 🔹 Stage 3 – Budgeting
+- Monthly budgets by category
+- Budget vs actual comparison chart
+- Spending insights and over-budget alerts
 
-### Backend
-- **Runtime**: Node.js with Express.js
-- **Database**: MongoDB with Mongoose ODM
-- **API**: RESTful API with JSON responses
-- **CORS**: Cross-origin resource sharing enabled
-- **Environment**: Configurable via environment variables
+## 🛠️ Tech Stack
 
-## 📁 Project Structure
+- **Frontend**: Next.js 15 (App Router), React, TypeScript, Tailwind CSS, shadcn/ui, Recharts
+- **Backend**: Node.js, Express.js
+- **Database**: MongoDB with Mongoose
+- **UX**: Mobile-first responsive UI, error/loading states
 
-```
-Personal-Finance-Visualizer/
-├── finance-backend/           # Backend API server
-│   ├── controllers/          # API controllers
-│   │   ├── budget.controller.js
-│   │   ├── transaction.controller.js
-│   │   └── summary.controller.js
-│   ├── models/              # Database models
-│   │   ├── budget.model.js
-│   │   └── transaction.model.js
-│   ├── routes/              # API routes
-│   │   ├── budget.route.js
-│   │   ├── transaction.route.js
-│   │   └── summary.route.js
-│   ├── config/              # Database configuration
-│   │   └── db.js
-│   ├── sampleData.js        # Sample data seeding
-│   ├── app.js              # Express app setup
-│   └── server.js           # Server entry point
-├── finance-frontend/         # Frontend application
-│   ├── src/
-│   │   ├── app/            # Next.js app router pages
-│   │   │   ├── dashboard/  # Dashboard page
-│   │   │   ├── transactions/ # Transaction management
-│   │   │   ├── budgets/    # Budget management
-│   │   │   ├── analytics/  # Analytics and reports
-│   │   │   └── layout.tsx  # Root layout
-│   │   ├── components/     # React components
-│   │   │   ├── ui/         # Base UI components
-│   │   │   ├── charts/     # Chart components
-│   │   │   ├── dashboard/  # Dashboard components
-│   │   │   └── layout/     # Layout components
-│   │   ├── constants/      # Application constants
-│   │   ├── services/       # API service functions
-│   │   └── utils/          # Utility functions
-│   └── package.json        # Frontend dependencies
-└── README.md              # This file
-```
+## 📊 Key Highlights
 
-## 🎨 Design Features
+- 📈 Real-time financial dashboards and analytics
+- 🎨 Category-based color coding
+- 📅 Time-based insights and trends
+- 🧠 Smart budget visualizations and progress tracking
+- 🚫 No login/signup (as per instructions)
 
-- **Modern UI**: Clean, professional design with gradients and glassmorphism
-- **Responsive**: Mobile-first design that works on all devices
-- **Interactive**: Hover effects, transitions, and smooth animations
-- **Color-coded**: Category-based color coding for easy identification
-- **Accessibility**: Proper contrast ratios and semantic HTML
-- **Currency**: Indian Rupee (₹) formatting throughout the application
+## 📱 Application Screenshots
 
-## 🚀 Getting Started
+### **Dashboard Overview**
+![Dashboard](Screenshots/Dashboard1.png)
 
-### Prerequisites
-- Node.js 18+ 
-- MongoDB (local or MongoDB Atlas)
-- npm or yarn
+### **Transaction Management**
+![Transactions](Screenshots/Transaction1.png)
 
-### Backend Setup
+### **Analytics & Reports**
+![Analytics](Screenshots/Analytics1.png)
 
-1. **Navigate to backend directory**
-   ```bash
-   cd finance-backend
-   ```
+## 🧪 Evaluation Criteria Covered
 
-2. **Install dependencies**
-   ```bash
-   npm install
-   ```
+- **Feature Implementation**: All features across Stage 1 to 3
+- **Code Quality**: Modular, well-documented, with TypeScript
+- **UI/UX**: Clean, responsive, and interactive design
 
-3. **Set up environment variables**
-   Create a `.env` file:
-   ```env
-   MONGODB_URI=mongodb://localhost:27017/finance-app
-   PORT=5000
-   ```
+## 🔗 Links
 
-4. **Start the backend server**
-   ```bash
-   npm start
-   ```
-
-5. **Seed sample data (optional)**
-   ```bash
-   node sampleData.js
-   ```
-
-### Frontend Setup
-
-1. **Navigate to frontend directory**
-   ```bash
-   cd finance-frontend
-   ```
-
-2. **Install dependencies**
-   ```bash
-   npm install
-   ```
-
-3. **Run the development server**
-   ```bash
-   npm run dev
-   ```
-
-4. **Open your browser**
-   Navigate to `http://localhost:3000`
-
-## 📱 Pages Overview
-
-### Dashboard (`/dashboard`)
-- Financial overview with key metrics
-- Interactive charts and visualizations
-- Budget progress tracking
-- Recent transaction list
-
-### Transactions (`/transactions`)
-- Complete transaction management
-- Advanced filtering and search
-- Add/Edit/Delete transactions
-- Real-time analytics
-
-### Budgets (`/budgets`)
-- Budget creation and management
-- Progress tracking with visual indicators
-- Status management (Active/Completed/Overdue)
-- Performance analytics
-
-### Analytics (`/analytics`)
-- Detailed financial reports
-- Category-wise analysis
-- Monthly, quarterly, and yearly trends
-- Spending insights and recommendations
-
-## 🔧 API Endpoints
-
-### Transactions
-- `GET /api/transactions` - Get all transactions
-- `POST /api/transactions` - Create new transaction
-- `PUT /api/transactions/:id` - Update transaction
-- `DELETE /api/transactions/:id` - Delete transaction
-
-### Budgets
-- `GET /api/budgets` - Get all budgets
-- `POST /api/budgets` - Create new budget
-- `PUT /api/budgets/:id` - Update budget
-- `DELETE /api/budgets/:id` - Delete budget
-
-### Summary/Analytics
-- `GET /api/summary` - Get financial summary
-- `GET /api/summary/monthly-trends` - Monthly trends
-- `GET /api/summary/quarterly-trends` - Quarterly trends
-- `GET /api/summary/yearly-trends` - Yearly trends
-
-## 🔧 Customization
-
-### Adding New Categories
-Edit backend models and frontend constants to add new transaction categories.
-
-### Modifying Charts
-Update chart components in `finance-frontend/src/components/charts/` to customize:
-- Colors and styling
-- Chart types and configurations
-- Tooltip content and formatting
-
-### Styling Changes
-Modify Tailwind classes in components or update `tailwind.config.js` for:
-- Color schemes
-- Typography
-- Spacing and layout
-
-## 🔮 Future Enhancements
-
-- **User Authentication**: Multi-user support with secure login
-- **Data Export**: PDF/Excel report generation
-- **Notifications**: Budget alerts and reminders
-- **Multi-currency**: Support for different currencies
-- **Goal Setting**: Financial goal tracking
-- **Recurring Transactions**: Automatic transaction scheduling
-- **Mobile App**: React Native mobile application
-- **Advanced Analytics**: Machine learning insights
-
-
-
-## 🙏 Acknowledgments
-
-- **Recharts** for beautiful chart components
-- **Lucide React** for consistent iconography
-- **Tailwind CSS** for utility-first styling
-- **Next.js** for the amazing React framework
-- **Express.js** for the robust backend framework
-- **MongoDB** for the flexible database solution
+- **GitHub Repository**: [Personal-Finance-Visualizer](https://github.com/riyaaryan2004/Personal-Finance-Visualizer)
+- **Live Demo**: [personal-finance-visualizer-five-lovat.vercel.app](https://personal-finance-visualizer-five-lovat.vercel.app)
 
 ---
 
-**Personal Finance Visualizer** - Take control of your financial future with beautiful insights and smart recommendations. 
