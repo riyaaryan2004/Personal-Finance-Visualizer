@@ -14,7 +14,7 @@ export const ChartCard: React.FC<ChartCardProps> = ({ title, icon: Icon, childre
       <CardHeader>
         <CardTitle className="flex items-center space-x-2">
           <Icon className="h-5 w-5 text-indigo-600" />
-          <span>{title}</span>
+          <span className="text-black">{title}</span>
         </CardTitle>
       </CardHeader>
       <CardContent>

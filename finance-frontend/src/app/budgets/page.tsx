@@ -6,6 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { LoadingSpinner } from '@/components/ui/LoadingSpinner';
 import { formatCurrency } from '@/utils/formatters';
 import { apiService } from '@/services/api';
+import { MetricCard } from '@/components/dashboard/MetricCard';
 import { 
   getCurrentMonth, 
   getMonthOptions, 
@@ -159,7 +160,7 @@ const BudgetsPage = () => {
                 <select
                   value={selectedMonth}
                   onChange={(e) => handleMonthChange(e.target.value)}
-                  className="px-4 py-2 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all duration-300 bg-white/80 backdrop-blur-sm font-medium"
+                  className="px-4 py-2 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all duration-300 bg-white/80 backdrop-blur-sm font-medium text-gray-700"
                 >
                   {getMonthOptions().map(month => (
                     <option key={month} value={month}>
@@ -184,50 +185,38 @@ const BudgetsPage = () => {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Enhanced Summary Cards */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-          <Card className="bg-gradient-to-r from-blue-500 to-blue-600 text-white shadow-xl hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-1">
-            <CardContent className="p-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-blue-100 text-sm font-medium">Total Budget</p>
-                  <p className="text-3xl font-bold">{formatCurrency(totalBudget)}</p>
-                  <p className="text-blue-200 text-xs mt-1">{budgetCount} categories</p>
-                </div>
-                <div className="bg-white/20 p-4 rounded-full backdrop-blur-sm">
-                  <Target className="h-8 w-8" />
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card className="bg-gradient-to-r from-green-500 to-green-600 text-white shadow-xl hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-1">
-            <CardContent className="p-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-green-100 text-sm font-medium">Average Budget</p>
-                  <p className="text-3xl font-bold">{formatCurrency(averageBudget)}</p>
-                  <p className="text-green-200 text-xs mt-1">Per category</p>
-                </div>
-                <div className="bg-white/20 p-4 rounded-full backdrop-blur-sm">
-                  <BarChart3 className="h-8 w-8" />
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card className="bg-gradient-to-r from-purple-500 to-purple-600 text-white shadow-xl hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-1">
-            <CardContent className="p-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-purple-100 text-sm font-medium">Budget Categories</p>
-                  <p className="text-3xl font-bold">{budgetCount}</p>
-                  <p className="text-purple-200 text-xs mt-1">Active budgets</p>
-                </div>
-                <div className="bg-white/20 p-4 rounded-full backdrop-blur-sm">
-                  <Settings className="h-8 w-8" />
-                </div>
-              </div>
-            </CardContent>
-          </Card>
+          <div className="transform hover:scale-105 transition-all duration-300">
+            <MetricCard
+              title="Total Budget"
+              value={formatCurrency(totalBudget)}
+              subtitle={`${budgetCount} categories`}
+              icon={Target}
+              gradient="bg-gradient-to-r from-blue-500 via-cyan-500 to-blue-600"
+              iconBgColor="bg-white/20"
+            />
+          </div>
+          
+          <div className="transform hover:scale-105 transition-all duration-300">
+            <MetricCard
+              title="Average Budget"
+              value={formatCurrency(averageBudget)}
+              subtitle="Per category"
+              icon={BarChart3}
+              gradient="bg-gradient-to-r from-green-500 via-emerald-500 to-green-600"
+              iconBgColor="bg-white/20"
+            />
+          </div>
+          
+          <div className="transform hover:scale-105 transition-all duration-300">
+            <MetricCard
+              title="Budget Categories"
+              value={budgetCount.toString()}
+              subtitle="Active budgets"
+              icon={Settings}
+              gradient="bg-gradient-to-r from-purple-500 via-violet-500 to-purple-600"
+              iconBgColor="bg-white/20"
+            />
+          </div>
         </div>
 
         {/* Enhanced Budgets List */}
@@ -359,10 +348,10 @@ const BudgetModal: React.FC<BudgetModalProps> = ({ budget, onClose, onSave, isSa
             <select
               value={formData.category}
               onChange={(e) => setFormData({ ...formData, category: e.target.value })}
-              className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all duration-300"
+              className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all duration-300 text-gray-700"
               required
             >
-              <option value="">Select Category</option>
+              <option value="" className="text-gray-600">Select Category</option>
               {CATEGORIES.map(category => (
                 <option key={category.id} value={category.name}>
                   {category.icon} {category.name}
@@ -377,7 +366,7 @@ const BudgetModal: React.FC<BudgetModalProps> = ({ budget, onClose, onSave, isSa
               type="number"
               value={formData.amount || ''}
               onChange={(e) => setFormData({ ...formData, amount: Number(e.target.value) })}
-              className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all duration-300"
+              className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all duration-300 text-gray-700"
               required
             />
           </div>

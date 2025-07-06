@@ -7,6 +7,7 @@ import { LoadingSpinner } from '@/components/ui/LoadingSpinner';
 import { formatCurrency, formatDate } from '@/utils/formatters';
 import { useLocalStorage } from '@/hooks/useLocalStorage';
 import { apiService } from '@/services/api';
+import { MetricCard } from '@/components/dashboard/MetricCard';
 import { 
   getCurrentMonth, 
   getMonthOptions, 
@@ -210,50 +211,38 @@ const TransactionsPage = () => {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Enhanced Summary Cards */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-          <Card className="bg-gradient-to-r from-red-500 to-red-600 text-white shadow-xl hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-1">
-            <CardContent className="p-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-red-100 text-sm font-medium">Total Expenses</p>
-                  <p className="text-3xl font-bold">{formatCurrency(totalExpense)}</p>
-                  <p className="text-red-200 text-xs mt-1">{transactionCount} transactions</p>
-                </div>
-                <div className="bg-white/20 p-4 rounded-full backdrop-blur-sm">
-                  <TrendingDown className="h-8 w-8" />
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card className="bg-gradient-to-r from-blue-500 to-blue-600 text-white shadow-xl hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-1">
-            <CardContent className="p-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-blue-100 text-sm font-medium">Average per Transaction</p>
-                  <p className="text-3xl font-bold">{formatCurrency(averageExpense)}</p>
-                  <p className="text-blue-200 text-xs mt-1">This period</p>
-                </div>
-                <div className="bg-white/20 p-4 rounded-full backdrop-blur-sm">
-                  <BarChart3 className="h-8 w-8" />
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card className="bg-gradient-to-r from-green-500 to-green-600 text-white shadow-xl hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-1">
-            <CardContent className="p-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-green-100 text-sm font-medium">Transaction Count</p>
-                  <p className="text-3xl font-bold">{transactionCount}</p>
-                  <p className="text-green-200 text-xs mt-1">Total records</p>
-                </div>
-                <div className="bg-white/20 p-4 rounded-full backdrop-blur-sm">
-                  <Clock className="h-8 w-8" />
-                </div>
-              </div>
-            </CardContent>
-          </Card>
+          <div className="transform hover:scale-105 transition-all duration-300">
+            <MetricCard
+              title="Total Expenses"
+              value={formatCurrency(totalExpense)}
+              subtitle={`${transactionCount} transactions`}
+              icon={TrendingDown}
+              gradient="bg-gradient-to-r from-red-500 via-rose-500 to-red-600"
+              iconBgColor="bg-white/20"
+            />
+          </div>
+          
+          <div className="transform hover:scale-105 transition-all duration-300">
+            <MetricCard
+              title="Average per Transaction"
+              value={formatCurrency(averageExpense)}
+              subtitle="This period"
+              icon={BarChart3}
+              gradient="bg-gradient-to-r from-blue-500 via-cyan-500 to-blue-600"
+              iconBgColor="bg-white/20"
+            />
+          </div>
+          
+          <div className="transform hover:scale-105 transition-all duration-300">
+            <MetricCard
+              title="Transaction Count"
+              value={transactionCount.toString()}
+              subtitle="Total records"
+              icon={Clock}
+              gradient="bg-gradient-to-r from-green-500 via-emerald-500 to-green-600"
+              iconBgColor="bg-white/20"
+            />
+          </div>
         </div>
 
         {/* Enhanced Filters */}
@@ -298,7 +287,7 @@ const TransactionsPage = () => {
                     <select
                       value={selectedMonth}
                       onChange={(e) => setSelectedMonth(e.target.value)}
-                      className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all duration-300 bg-white/80 backdrop-blur-sm"
+                      className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all duration-300 bg-white/80 backdrop-blur-sm text-gray-700"
                     >
                       {getMonthOptions().map(month => (
                         <option key={month} value={month}>
@@ -313,7 +302,7 @@ const TransactionsPage = () => {
                     <select
                       value={selectedYear}
                       onChange={(e) => setSelectedYear(Number(e.target.value))}
-                      className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all duration-300 bg-white/80 backdrop-blur-sm"
+                      className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all duration-300 bg-white/80 backdrop-blur-sm text-gray-700"
                     >
                       {getYearOptions().map(year => (
                         <option key={year} value={year}>
@@ -335,7 +324,7 @@ const TransactionsPage = () => {
                     placeholder="Search transactions..."
                     value={searchTerm}
                     onChange={(e) => setSearchTerm(e.target.value)}
-                    className="w-full pl-12 pr-4 py-3 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all duration-300 bg-white/80 backdrop-blur-sm"
+                    className="w-full pl-12 pr-4 py-3 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all duration-300 bg-white/80 backdrop-blur-sm placeholder-gray-600"
                   />
                 </div>
 
@@ -343,9 +332,9 @@ const TransactionsPage = () => {
                 <select
                   value={selectedCategory}
                   onChange={(e) => setSelectedCategory(e.target.value)}
-                  className="px-4 py-3 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all duration-300 bg-white/80 backdrop-blur-sm"
+                  className="px-4 py-3 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all duration-300 bg-white/80 backdrop-blur-sm text-gray-700"
                 >
-                  <option value="">All Categories</option>
+                  <option value="" className="text-gray-600">All Categories</option>
                   {CATEGORIES.map(category => (
                     <option key={category.id} value={category.name}>
                       {category.icon} {category.name}
@@ -484,7 +473,7 @@ const TransactionModal: React.FC<TransactionModalProps> = ({ transaction, onClos
       <div className="bg-white rounded-2xl p-8 w-full max-w-md shadow-2xl border border-gray-100">
         <div className="flex items-center space-x-3 mb-6">
           <div className="bg-gradient-to-r from-indigo-500 to-purple-600 p-3 rounded-xl">
-            <DollarSign className="h-6 w-6 text-white" />
+            <Plus className="h-6 w-6 text-white" />
           </div>
           <h2 className="text-2xl font-bold text-gray-900">
             {transaction ? 'Edit Transaction' : 'Add New Transaction'}
@@ -498,7 +487,7 @@ const TransactionModal: React.FC<TransactionModalProps> = ({ transaction, onClos
               type="number"
               value={formData.amount}
               onChange={(e) => setFormData({ ...formData, amount: Number(e.target.value) })}
-              className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all duration-300"
+              className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all duration-300 text-gray-700"
               required
             />
           </div>
@@ -508,10 +497,10 @@ const TransactionModal: React.FC<TransactionModalProps> = ({ transaction, onClos
             <select
               value={formData.category}
               onChange={(e) => setFormData({ ...formData, category: e.target.value })}
-              className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all duration-300"
+              className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all duration-300 text-gray-700"
               required
             >
-              <option value="">Select Category</option>
+              <option value="" className="text-gray-600">Select Category</option>
               {CATEGORIES.map(category => (
                 <option key={category.id} value={category.name}>
                   {category.icon} {category.name}
@@ -526,7 +515,7 @@ const TransactionModal: React.FC<TransactionModalProps> = ({ transaction, onClos
               type="text"
               value={formData.description}
               onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-              className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all duration-300"
+              className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all duration-300 text-gray-700"
               required
             />
           </div>
@@ -537,7 +526,7 @@ const TransactionModal: React.FC<TransactionModalProps> = ({ transaction, onClos
               type="date"
               value={formData.date}
               onChange={(e) => setFormData({ ...formData, date: e.target.value })}
-              className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all duration-300"
+              className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all duration-300 text-gray-700"
               required
             />
           </div>

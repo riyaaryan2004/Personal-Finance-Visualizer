@@ -5,6 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { LoadingSpinner } from '@/components/ui/LoadingSpinner';
 import { formatCurrency } from '@/utils/formatters';
 import { apiService } from '@/services/api';
+import { MetricCard } from '@/components/dashboard/MetricCard';
 import { 
   getCurrentMonth, 
   getMonthOptions, 
@@ -142,7 +143,7 @@ const AnalyticsPage = () => {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-slate-50 to-gray-100 flex items-center justify-center">
+      <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-100 flex items-center justify-center">
         <LoadingSpinner size="lg" />
       </div>
     );
@@ -150,7 +151,7 @@ const AnalyticsPage = () => {
 
   if (error) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-slate-50 to-gray-100 flex items-center justify-center">
+      <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-100 flex items-center justify-center">
         <div className="text-center">
           <p className="text-red-600 mb-4">{error}</p>
           <button
@@ -165,7 +166,7 @@ const AnalyticsPage = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-gray-100">
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-100">
       {/* Header */}
       <div className="bg-white shadow-sm border-b">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -216,7 +217,7 @@ const AnalyticsPage = () => {
               <select
                 value={filterType === 'month' ? selectedMonth : selectedYear}
                 onChange={(e) => handlePeriodChange(e.target.value)}
-                className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500"
+                className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 text-gray-700"
               >
                 {filterType === 'month' ? (
                   getMonthOptions().map(month => (
@@ -240,73 +241,67 @@ const AnalyticsPage = () => {
         {/* Enhanced Analytics Dashboard */}
         <div className="space-y-8">
           {/* Quick Stats */}
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-            <Card className="bg-gradient-to-br from-blue-500 to-blue-600 text-white">
-              <CardContent className="p-4">
-                <div className="text-center">
-                  <TrendingUp className="h-8 w-8 mx-auto mb-2 opacity-80" />
-                  <p className="text-blue-100 text-xs">Total Periods</p>
-                  <p className="text-2xl font-bold">
-                    {analyticsData?.monthlyTrends?.length ?? 0}
-                  </p>
-                </div>
-              </CardContent>
-            </Card>
-            <Card className="bg-gradient-to-br from-green-500 to-green-600 text-white">
-              <CardContent className="p-4">
-                <div className="text-center">
-                  <Wallet className="h-8 w-8 mx-auto mb-2 opacity-80" />
-                  <p className="text-green-100 text-xs">Total Spent</p>
-                  <p className="text-2xl font-bold">
-                    {formatCurrency(
-                      analyticsData?.monthlyTrends?.reduce((sum, t) => sum + t.expenses, 0) ?? 0
-                    )}
-                  </p>
-                </div>
-              </CardContent>
-            </Card>
-            <Card className="bg-gradient-to-br from-purple-500 to-purple-600 text-white">
-              <CardContent className="p-4">
-                <div className="text-center">
-                  <Target className="h-8 w-8 mx-auto mb-2 opacity-80" />
-                  <p className="text-purple-100 text-xs">
-                    Avg {filterType === 'month' ? 'Monthly' : filterType === 'quarter' ? 'Quarterly' : 'Yearly'}
-                  </p>
-                  <p className="text-2xl font-bold">
-                    {formatCurrency(
-                      analyticsData?.monthlyTrends && analyticsData.monthlyTrends.length
-                        ? analyticsData.monthlyTrends.reduce((sum, t) => sum + t.expenses, 0) / analyticsData.monthlyTrends.length
-                        : 0
-                    )}
-                  </p>
-                </div>
-              </CardContent>
-            </Card>
-            <Card className="bg-gradient-to-br from-orange-500 to-orange-600 text-white">
-              <CardContent className="p-4">
-                <div className="text-center">
-                  <BarChart3 className="h-8 w-8 mx-auto mb-2 opacity-80" />
-                  <p className="text-orange-100 text-xs">Trend</p>
-                  <p className="text-2xl font-bold">
-                    {analyticsData?.monthlyTrends && analyticsData.monthlyTrends.length > 1 
-                      ? (() => {
-                          const recent = analyticsData.monthlyTrends.slice(-2);
-                          const change = ((recent[1]?.expenses || 0) - (recent[0]?.expenses || 0)) / ((recent[0]?.expenses || 1)) * 100;
-                          return change > 0 ? `+${change.toFixed(1)}%` : `${change.toFixed(1)}%`;
-                        })()
-                      : 'N/A'
-                    }
-                  </p>
-                </div>
-              </CardContent>
-            </Card>
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+            <div className="transform hover:scale-105 transition-all duration-300">
+              <MetricCard
+                title="Total Periods"
+                value={(analyticsData?.monthlyTrends?.length ?? 0).toString()}
+                icon={TrendingUp}
+                gradient="bg-gradient-to-r from-blue-500 via-cyan-500 to-blue-600"
+                iconBgColor="bg-white/20"
+              />
+            </div>
+            
+            <div className="transform hover:scale-105 transition-all duration-300">
+              <MetricCard
+                title="Total Spent"
+                value={formatCurrency(
+                  analyticsData?.monthlyTrends?.reduce((sum, t) => sum + t.expenses, 0) ?? 0
+                )}
+                icon={Wallet}
+                gradient="bg-gradient-to-r from-green-500 via-emerald-500 to-green-600"
+                iconBgColor="bg-white/20"
+              />
+            </div>
+            
+            <div className="transform hover:scale-105 transition-all duration-300">
+              <MetricCard
+                title={`Avg ${filterType === 'month' ? 'Monthly' : filterType === 'quarter' ? 'Quarterly' : 'Yearly'}`}
+                value={formatCurrency(
+                  analyticsData?.monthlyTrends && analyticsData.monthlyTrends.length
+                    ? analyticsData.monthlyTrends.reduce((sum, t) => sum + t.expenses, 0) / analyticsData.monthlyTrends.length
+                    : 0
+                )}
+                icon={Target}
+                gradient="bg-gradient-to-r from-purple-500 via-violet-500 to-purple-600"
+                iconBgColor="bg-white/20"
+              />
+            </div>
+            
+            <div className="transform hover:scale-105 transition-all duration-300">
+              <MetricCard
+                title="Trend"
+                value={
+                  analyticsData?.monthlyTrends && analyticsData.monthlyTrends.length > 1 
+                    ? (() => {
+                        const recent = analyticsData.monthlyTrends.slice(-2);
+                        const change = ((recent[1]?.expenses || 0) - (recent[0]?.expenses || 0)) / ((recent[0]?.expenses || 1)) * 100;
+                        return change > 0 ? `+${change.toFixed(1)}%` : `${change.toFixed(1)}%`;
+                      })()
+                    : 'N/A'
+                }
+                icon={BarChart3}
+                gradient="bg-gradient-to-r from-orange-500 via-red-500 to-orange-600"
+                iconBgColor="bg-white/20"
+              />
+            </div>
           </div>
           {/* Spending Trends */}
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center space-x-2">
                 <Activity className="h-5 w-5 text-indigo-600" />
-                <span>Spending Trends</span>
+                <span className="text-gray-900">Spending Trends</span>
               </CardTitle>
             </CardHeader>
             <CardContent>
@@ -358,44 +353,47 @@ const AnalyticsPage = () => {
                 {analyticsData?.monthlyTrends && analyticsData.monthlyTrends.length > 0 ? (
                   <div className="space-y-6">
                     {/* Summary Cards */}
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                      <div className="bg-gradient-to-r from-blue-500 to-blue-600 text-white p-4 rounded-lg">
-                        <div className="text-center">
-                          <p className="text-blue-100 text-sm">Average {filterType === 'month' ? 'Monthly' : filterType === 'quarter' ? 'Quarterly' : 'Yearly'}</p>
-                          <p className="text-2xl font-bold">
-                            {formatCurrency(
-                              analyticsData.monthlyTrends.reduce((sum, t) => sum + t.expenses, 0) / 
-                              analyticsData.monthlyTrends.length
-                            )}
-                          </p>
-                        </div>
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                      <div className="transform hover:scale-105 transition-all duration-300">
+                        <MetricCard
+                          title={`Average ${filterType === 'month' ? 'Monthly' : filterType === 'quarter' ? 'Quarterly' : 'Yearly'}`}
+                          value={formatCurrency(
+                            analyticsData.monthlyTrends.reduce((sum, t) => sum + t.expenses, 0) / 
+                            analyticsData.monthlyTrends.length
+                          )}
+                          icon={BarChart3}
+                          gradient="bg-gradient-to-r from-blue-500 via-cyan-500 to-blue-600"
+                          iconBgColor="bg-white/20"
+                        />
                       </div>
                       
-                      <div className="bg-gradient-to-r from-green-500 to-green-600 text-white p-4 rounded-lg">
-                        <div className="text-center">
-                          <p className="text-green-100 text-sm">Lowest {filterType === 'month' ? 'Month' : filterType === 'quarter' ? 'Quarter' : 'Year'}</p>
-                          <p className="text-2xl font-bold">
-                            {formatCurrency(
-                              Math.min(...analyticsData.monthlyTrends.map(t => t.expenses))
-                            )}
-                          </p>
-                        </div>
+                      <div className="transform hover:scale-105 transition-all duration-300">
+                        <MetricCard
+                          title={`Lowest ${filterType === 'month' ? 'Month' : filterType === 'quarter' ? 'Quarter' : 'Year'}`}
+                          value={formatCurrency(
+                            Math.min(...analyticsData.monthlyTrends.map(t => t.expenses))
+                          )}
+                          icon={TrendingDown}
+                          gradient="bg-gradient-to-r from-green-500 via-emerald-500 to-green-600"
+                          iconBgColor="bg-white/20"
+                        />
                       </div>
                       
-                      <div className="bg-gradient-to-r from-red-500 to-red-600 text-white p-4 rounded-lg">
-                        <div className="text-center">
-                          <p className="text-red-100 text-sm">Highest {filterType === 'month' ? 'Month' : filterType === 'quarter' ? 'Quarter' : 'Year'}</p>
-                          <p className="text-2xl font-bold">
-                            {formatCurrency(
-                              Math.max(...analyticsData.monthlyTrends.map(t => t.expenses))
-                            )}
-                          </p>
-                        </div>
+                      <div className="transform hover:scale-105 transition-all duration-300">
+                        <MetricCard
+                          title={`Highest ${filterType === 'month' ? 'Month' : filterType === 'quarter' ? 'Quarter' : 'Year'}`}
+                          value={formatCurrency(
+                            Math.max(...analyticsData.monthlyTrends.map(t => t.expenses))
+                          )}
+                          icon={TrendingUp}
+                          gradient="bg-gradient-to-r from-red-500 via-rose-500 to-red-600"
+                          iconBgColor="bg-white/20"
+                        />
                       </div>
                     </div>
                     {/* Trends Chart */}
                     <div className="bg-white p-6 rounded-lg border">
-                      <h3 className="text-lg font-semibold mb-4">Spending Trend</h3>
+                      <h3 className="text-lg font-semibold mb-4 text-gray-900">Spending Trend</h3>
                       <div className="space-y-3">
                         {analyticsData.monthlyTrends.map((trend, idx) => {
                           const maxExpense = Math.max(...analyticsData.monthlyTrends.map(t => t.expenses));
@@ -423,25 +421,25 @@ const AnalyticsPage = () => {
                     </div>
                     {/* Insights */}
                     <div className="bg-gradient-to-r from-indigo-50 to-purple-50 p-6 rounded-lg border">
-                      <h3 className="text-lg font-semibold mb-4 text-gray-800">Trend Insights</h3>
+                      <h3 className="text-lg font-semibold mb-4 text-gray-900">Trend Insights</h3>
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-6 text-sm">
                         <div className="space-y-3">
                           <div className="flex items-center space-x-2">
                             <span className="text-green-500">📈</span>
-                            <span>Average {filterType === 'month' ? 'monthly' : filterType === 'quarter' ? 'quarterly' : 'yearly'} spending: <strong>{formatCurrency(
+                            <span className="text-gray-800">Average {filterType === 'month' ? 'monthly' : filterType === 'quarter' ? 'quarterly' : 'yearly'} spending: <strong>{formatCurrency(
                               analyticsData.monthlyTrends.reduce((sum, t) => sum + t.expenses, 0) / 
                               analyticsData.monthlyTrends.length
                             )}</strong></span>
                           </div>
                           <div className="flex items-center space-x-2">
                             <span className="text-blue-500">💰</span>
-                            <span>Total spent in {analyticsData.monthlyTrends.length} {filterType === 'month' ? 'months' : filterType === 'quarter' ? 'quarters' : 'years'}: <strong>{formatCurrency(
+                            <span className="text-gray-800">Total spent in {analyticsData.monthlyTrends.length} {filterType === 'month' ? 'months' : filterType === 'quarter' ? 'quarters' : 'years'}: <strong>{formatCurrency(
                               analyticsData.monthlyTrends.reduce((sum, t) => sum + t.expenses, 0)
                             )}</strong></span>
                           </div>
                           <div className="flex items-center space-x-2">
                             <span className="text-purple-500">📊</span>
-                            <span>Spending variance: <strong>{(() => {
+                            <span className="text-gray-800">Spending variance: <strong>{(() => {
                               const amounts = analyticsData.monthlyTrends.map(t => t.expenses);
                               const avg = amounts.reduce((sum, val) => sum + val, 0) / amounts.length;
                               const variance = amounts.reduce((sum, val) => sum + Math.pow(val - avg, 2), 0) / amounts.length;
@@ -450,7 +448,7 @@ const AnalyticsPage = () => {
                           </div>
                           <div className="flex items-center space-x-2">
                             <span className="text-orange-500">🎯</span>
-                            <span>Lowest {filterType === 'month' ? 'month' : filterType === 'quarter' ? 'quarter' : 'year'}: <strong>{formatPeriodLabel(
+                            <span className="text-gray-800">Lowest {filterType === 'month' ? 'month' : filterType === 'quarter' ? 'quarter' : 'year'}: <strong>{formatPeriodLabel(
                               analyticsData.monthlyTrends.find(t => 
                                 t.expenses === Math.min(...analyticsData.monthlyTrends.map(t => t.expenses))
                               )?.month || ''
@@ -458,7 +456,7 @@ const AnalyticsPage = () => {
                           </div>
                           <div className="flex items-center space-x-2">
                             <span className="text-red-500">⚠️</span>
-                            <span>Highest {filterType === 'month' ? 'month' : filterType === 'quarter' ? 'quarter' : 'year'}: <strong>{formatPeriodLabel(
+                            <span className="text-gray-800">Highest {filterType === 'month' ? 'month' : filterType === 'quarter' ? 'quarter' : 'year'}: <strong>{formatPeriodLabel(
                               analyticsData.monthlyTrends.find(t => 
                                 t.expenses === Math.max(...analyticsData.monthlyTrends.map(t => t.expenses))
                               )?.month || ''
@@ -468,7 +466,7 @@ const AnalyticsPage = () => {
                         <div className="space-y-3">
                           <div className="flex items-center space-x-2">
                             <span className="text-indigo-500">📈</span>
-                            <span>Growth trend: <strong>{(() => {
+                            <span className="text-gray-800">Growth trend: <strong>{(() => {
                               if (analyticsData.monthlyTrends.length < 2) return 'N/A';
                               const recent = analyticsData.monthlyTrends.slice(-2);
                               const change = ((recent[1]?.expenses || 0) - (recent[0]?.expenses || 0)) / (recent[0]?.expenses || 1) * 100;
@@ -477,7 +475,7 @@ const AnalyticsPage = () => {
                           </div>
                           <div className="flex items-center space-x-2">
                             <span className="text-teal-500">📅</span>
-                            <span>Consistent periods: <strong>{(() => {
+                            <span className="text-gray-800">Consistent periods: <strong>{(() => {
                               const amounts = analyticsData.monthlyTrends.map(t => t.expenses);
                               const avg = amounts.reduce((sum, val) => sum + val, 0) / amounts.length;
                               const consistent = amounts.filter(amount => Math.abs(amount - avg) / avg < 0.2).length;
@@ -486,7 +484,7 @@ const AnalyticsPage = () => {
                           </div>
                           <div className="flex items-center space-x-2">
                             <span className="text-yellow-500">💡</span>
-                            <span>Recommendation: <strong>{(() => {
+                            <span className="text-gray-800">Recommendation: <strong>{(() => {
                               const amounts = analyticsData.monthlyTrends.map(t => t.expenses);
                               const avg = amounts.reduce((sum, val) => sum + val, 0) / amounts.length;
                               const recent = amounts[amounts.length - 1];
@@ -497,14 +495,14 @@ const AnalyticsPage = () => {
                           </div>
                           <div className="flex items-center space-x-2">
                             <span className="text-pink-500">🎯</span>
-                            <span>Target for next {filterType === 'month' ? 'month' : filterType === 'quarter' ? 'quarter' : 'year'}: <strong>{formatCurrency(
+                            <span className="text-gray-800">Target for next {filterType === 'month' ? 'month' : filterType === 'quarter' ? 'quarter' : 'year'}: <strong>{formatCurrency(
                               analyticsData.monthlyTrends.reduce((sum, t) => sum + t.expenses, 0) / 
                               analyticsData.monthlyTrends.length * 0.9
                             )}</strong></span>
                           </div>
                           <div className="flex items-center space-x-2">
                             <span className="text-emerald-500">📊</span>
-                            <span>Savings potential: <strong>{formatCurrency(
+                            <span className="text-gray-800">Savings potential: <strong>{formatCurrency(
                               analyticsData.monthlyTrends.reduce((sum, t) => sum + t.expenses, 0) / 
                               analyticsData.monthlyTrends.length * 0.1
                             )}</strong></span>
@@ -518,8 +516,8 @@ const AnalyticsPage = () => {
                     <div className="text-gray-400 mb-4">
                       <BarChart3 className="h-16 w-16 mx-auto" />
                     </div>
-                    <p className="text-gray-500 text-lg font-medium">No trend data available</p>
-                    <p className="text-gray-400 text-sm">Add some transactions to see your spending trends</p>
+                                      <p className="text-gray-700 text-lg font-medium">No trend data available</p>
+                  <p className="text-gray-600 text-sm">Add some transactions to see your spending trends</p>
                   </div>
                 )}
               </div>
