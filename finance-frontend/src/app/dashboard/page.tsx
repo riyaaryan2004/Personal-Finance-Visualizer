@@ -19,16 +19,8 @@ import { formatCurrency } from '@/utils/formatters';
 import { useLocalStorage } from '@/hooks/useLocalStorage';
 import { apiService } from '@/services/api';
 import { 
-  MOCK_CATEGORY_DATA, 
-  MOCK_RECENT_TRANSACTIONS, 
-  MOCK_BUDGET_DATA, 
-  MOCK_TREND_DATA,
-  CategoryData,
-  Transaction,
-  BudgetData,
-  TrendData
-} from '@/constants/dashboard';
-import { CATEGORIES } from '@/constants/data';
+  CATEGORIES
+} from '@/constants/data';
 
 import { MetricCard } from '@/components/dashboard/MetricCard';
 import { ChartCard } from '@/components/dashboard/ChartCard';

@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { BarChart3, CreditCard, Target, TrendingUp, DollarSign, Shield, Zap, Sparkles } from 'lucide-react';
 
 export default function HomePage() {
+  const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api';
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-100">
       {/* Header */}

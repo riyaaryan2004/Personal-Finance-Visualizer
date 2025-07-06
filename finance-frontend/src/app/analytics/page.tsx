@@ -11,24 +11,18 @@ import {
   getMonthOptions, 
   getYearOptions,
   formatMonthYear,
-  formatPeriodLabel,
-  filterTransactionsByMonth,
-  filterTransactionsByYear
+  formatPeriodLabel
 } from '@/utils/dateUtils';
 import { 
   BarChart3, 
-  PieChart, 
   TrendingUp, 
   TrendingDown, 
   Calendar,
   Wallet,
   Target,
   Activity,
-  Zap,
-  Lightbulb,
-  Plus
+  BarChart
 } from 'lucide-react';
-import { CATEGORIES } from '@/constants/data';
 
 interface AnalyticsData {
   overview: {
@@ -95,13 +89,13 @@ const AnalyticsPage = () => {
       }
 
       setAnalyticsData({
-        overview: overviewRes.data || {
+        overview: (overviewRes.data as { totalExpenses: number; transactionCount: number }) || {
           totalExpenses: 0,
           transactionCount: 0
         },
-        categoryBreakdown: categoryRes.data || [],
-        budgetVsActual: budgetRes.data || [],
-        monthlyTrends: trendsRes.data || []
+        categoryBreakdown: (categoryRes.data as { category: string; amount: number; percentage: number }[]) || [],
+        budgetVsActual: (budgetRes.data as { category: string; budget: number; actual: number; percentage?: number }[]) || [],
+        monthlyTrends: (trendsRes.data as { month: string; expenses: number }[]) || []
       });
     } catch (error) {
       console.error('Error loading analytics data:', error);

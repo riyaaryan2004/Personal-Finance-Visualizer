@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
-import { Plus, Edit, Trash2, Target, Calendar, TrendingUp, TrendingDown, DollarSign, BarChart3, Settings } from 'lucide-react';
+import { Plus, Edit, Trash2, Target, Calendar, BarChart3, Settings } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { LoadingSpinner } from '@/components/ui/LoadingSpinner';
 import { formatCurrency } from '@/utils/formatters';
@@ -32,7 +32,7 @@ const BudgetsPage = () => {
       const response = await apiService.getBudgets();
       if (response.data) {
         // Filter budgets by selected month
-        const filteredBudgets = response.data.filter((budget: Budget) => 
+        const filteredBudgets = (response.data as Budget[]).filter((budget) => 
           budget.month === month
         );
         setBudgets(filteredBudgets);

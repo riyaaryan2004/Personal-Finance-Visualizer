@@ -1,11 +1,10 @@
 'use client';
 
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
-import { Plus, Search, Filter, Edit, Trash2, Eye, Calendar, TrendingUp, TrendingDown, DollarSign, Clock, BarChart3 } from 'lucide-react';
+import { Plus, Search, Edit, Trash2, Calendar, TrendingDown, BarChart3, Clock } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { LoadingSpinner } from '@/components/ui/LoadingSpinner';
 import { formatCurrency, formatDate } from '@/utils/formatters';
-import { useLocalStorage } from '@/hooks/useLocalStorage';
 import { apiService } from '@/services/api';
 import { MetricCard } from '@/components/dashboard/MetricCard';
 import { 
@@ -40,8 +39,8 @@ const TransactionsPage = () => {
     try {
       const response = await apiService.getTransactions();
       if (response.data) {
-        setTransactions(response.data);
-        setFilteredTransactions(response.data);
+        setTransactions(response.data as Transaction[]);
+        setFilteredTransactions(response.data as Transaction[]);
       } else {
         console.error('Failed to load transactions:', response.error);
         // Fallback to demo data if API fails
