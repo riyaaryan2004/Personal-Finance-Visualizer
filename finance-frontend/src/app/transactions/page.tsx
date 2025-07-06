@@ -7,6 +7,7 @@ import { LoadingSpinner } from '@/components/ui/LoadingSpinner';
 import { formatCurrency, formatDate } from '@/utils/formatters';
 import { apiService } from '@/services/api';
 import { MetricCard } from '@/components/dashboard/MetricCard';
+import { debounce } from '@/utils/debounce';
 import { 
   getCurrentMonth, 
   getMonthOptions, 
@@ -60,8 +61,10 @@ const TransactionsPage = () => {
     loadTransactions();
   }, [loadTransactions]);
 
-  // Memoized filtered transactions with advanced filtering
+  // Memoized filtered transactions with advanced filtering - optimized
   const processedTransactions = useMemo(() => {
+    if (transactions.length === 0) return [];
+
     let filtered = transactions;
 
     // Apply month/year filter
@@ -71,11 +74,12 @@ const TransactionsPage = () => {
       filtered = filterTransactionsByYear(filtered, selectedYear);
     }
 
-    // Apply search filter
-    if (searchTerm) {
+    // Apply search filter - optimized with early return
+    if (searchTerm.trim()) {
+      const searchLower = searchTerm.toLowerCase();
       filtered = filtered.filter(t => 
-        t.description?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        t.category?.toLowerCase().includes(searchTerm.toLowerCase())
+        t.description?.toLowerCase().includes(searchLower) ||
+        t.category?.toLowerCase().includes(searchLower)
       );
     }
 
@@ -84,8 +88,10 @@ const TransactionsPage = () => {
       filtered = filtered.filter(t => t.category === selectedCategory);
     }
 
-    // Sort by date: most recent first
-    filtered.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+    // Sort by date: most recent first - optimized with stable sort
+    if (filtered.length > 1) {
+      filtered = [...filtered].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+    }
 
     return filtered;
   }, [transactions, filterType, selectedMonth, selectedYear, searchTerm, selectedCategory]);
@@ -162,6 +168,14 @@ const TransactionsPage = () => {
       setIsSaving(false);
     }
   }, [editingTransaction, loadTransactions]);
+
+  // Debounced search handler
+  const debouncedSetSearchTerm = useCallback(
+    debounce((value: string) => {
+      setSearchTerm(value);
+    }, 300),
+    []
+  );
 
   const clearFilters = useCallback(() => {
     setSearchTerm('');
@@ -321,9 +335,9 @@ const TransactionsPage = () => {
                   <input
                     type="text"
                     placeholder="Search transactions..."
-                    value={searchTerm}
-                    onChange={(e) => setSearchTerm(e.target.value)}
-                    className="w-full pl-12 pr-4 py-3 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all duration-300 bg-white/80 backdrop-blur-sm placeholder-gray-600"
+                    defaultValue={searchTerm}
+                    onChange={(e) => debouncedSetSearchTerm(e.target.value)}
+                    className="w-full pl-12 pr-4 py-3 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all duration-300 bg-white/80 backdrop-blur-sm placeholder-gray-600 text-gray-700"
                   />
                 </div>
 
@@ -396,7 +410,10 @@ const TransactionsPage = () => {
                     
                     <div className="flex space-x-2">
                       <button
-                        onClick={() => setEditingTransaction(transaction)}
+                        onClick={() => {
+                          setEditingTransaction(transaction);
+                          setShowAddModal(true);
+                        }}
                         className="p-3 text-blue-600 hover:bg-blue-50 rounded-xl transition-all duration-300 hover:shadow-md"
                         title="Edit"
                       >
@@ -459,6 +476,46 @@ const TransactionModal: React.FC<TransactionModalProps> = ({ transaction, onClos
     date: transaction?.date || new Date().toISOString().split('T')[0],
     description: transaction?.description || ''
   });
+
+  // Update form data when transaction prop changes
+  useEffect(() => {
+    if (transaction) {
+      // Format the date properly for the date input
+      const formatDateForInput = (dateString: string) => {
+        try {
+          const date = new Date(dateString);
+          // Check if date is valid
+          if (isNaN(date.getTime())) {
+            console.warn('Invalid date:', dateString);
+            return new Date().toISOString().split('T')[0];
+          }
+          return date.toISOString().split('T')[0];
+        } catch (error) {
+          console.error('Error formatting date:', error);
+          return new Date().toISOString().split('T')[0];
+        }
+      };
+      
+      console.log('Editing transaction with date:', transaction.date);
+      const formattedDate = formatDateForInput(transaction.date);
+      console.log('Formatted date:', formattedDate);
+      
+      setFormData({
+        amount: transaction.amount,
+        category: transaction.category,
+        date: formattedDate,
+        description: transaction.description || ''
+      });
+    } else {
+      // Reset form for new transaction
+      setFormData({
+        amount: 0,
+        category: '',
+        date: new Date().toISOString().split('T')[0],
+        description: ''
+      });
+    }
+  }, [transaction]);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();

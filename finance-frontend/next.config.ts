@@ -13,6 +13,9 @@ const nextConfig: NextConfig = {
   images: {
     unoptimized: true,
   },
+  // Performance optimizations
+  compress: true,
+  poweredByHeader: false,
   webpack: (config, { dev, isServer }) => {
     if (!dev && !isServer) {
       config.optimization.splitChunks = {
@@ -22,6 +25,12 @@ const nextConfig: NextConfig = {
             test: /[\\/]node_modules[\\/]/,
             name: 'vendors',
             chunks: 'all',
+          },
+          recharts: {
+            test: /[\\/]node_modules[\\/]recharts[\\/]/,
+            name: 'recharts',
+            chunks: 'all',
+            priority: 10,
           },
         },
       };

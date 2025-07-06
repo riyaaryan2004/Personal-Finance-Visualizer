@@ -7,7 +7,7 @@ interface AreaChartComponentProps {
   data: TrendData[];
 }
 
-const CustomTooltip = ({ active, payload, label }: any) => {
+const CustomTooltip = React.memo(({ active, payload, label }: any) => {
   if (active && payload && payload.length) {
     return (
       <div className="bg-white p-3 border border-gray-200 rounded-lg shadow-lg">
@@ -17,9 +17,9 @@ const CustomTooltip = ({ active, payload, label }: any) => {
     );
   }
   return null;
-};
+});
 
-export const AreaChartComponent: React.FC<AreaChartComponentProps> = ({ data }) => {
+export const AreaChartComponent: React.FC<AreaChartComponentProps> = React.memo(({ data }) => {
   if (data.length === 0) {
     return (
       <div className="flex items-center justify-center h-64 text-gray-500">
@@ -53,4 +53,4 @@ export const AreaChartComponent: React.FC<AreaChartComponentProps> = ({ data }) 
       </AreaChart>
     </ResponsiveContainer>
   );
-}; 
+}); 

@@ -7,7 +7,21 @@ export interface ApiResponse<T> {
 }
 
 class ApiService {
+  private cache = new Map<string, { data: any; timestamp: number }>();
+  private readonly CACHE_DURATION = 30000; // 30 seconds
+
   private async request<T>(endpoint: string, options: RequestInit = {}): Promise<ApiResponse<T>> {
+    const cacheKey = `${endpoint}-${JSON.stringify(options)}`;
+    const now = Date.now();
+    
+    // Check cache for GET requests
+    if (!options.method || options.method === 'GET') {
+      const cached = this.cache.get(cacheKey);
+      if (cached && (now - cached.timestamp) < this.CACHE_DURATION) {
+        return { data: cached.data };
+      }
+    }
+
     try {
       const response = await fetch(`${API_BASE_URL}${endpoint}`, {
         headers: {
@@ -23,6 +37,11 @@ class ApiService {
         return { error: data.message || 'Something went wrong' };
       }
 
+      // Cache successful GET responses
+      if (!options.method || options.method === 'GET') {
+        this.cache.set(cacheKey, { data, timestamp: now });
+      }
+
       return { data };
     } catch (error) {
       return { error: 'Network error occurred' };
@@ -35,23 +54,32 @@ class ApiService {
   }
 
   async addTransaction(transaction: unknown): Promise<ApiResponse<unknown>> {
-    return this.request<unknown>('/transactions', {
+    const result = await this.request<unknown>('/transactions', {
       method: 'POST',
       body: JSON.stringify(transaction),
     });
+    // Clear cache after modification
+    this.cache.clear();
+    return result;
   }
 
   async updateTransaction(id: string, transaction: unknown): Promise<ApiResponse<unknown>> {
-    return this.request<unknown>(`/transactions/${id}`, {
+    const result = await this.request<unknown>(`/transactions/${id}`, {
       method: 'PUT',
       body: JSON.stringify(transaction),
     });
+    // Clear cache after modification
+    this.cache.clear();
+    return result;
   }
 
   async deleteTransaction(id: string): Promise<ApiResponse<unknown>> {
-    return this.request<unknown>(`/transactions/${id}`, {
+    const result = await this.request<unknown>(`/transactions/${id}`, {
       method: 'DELETE',
     });
+    // Clear cache after modification
+    this.cache.clear();
+    return result;
   }
 
   // Budget APIs

@@ -8,18 +8,20 @@ interface ChartCardProps {
   children: React.ReactNode;
 }
 
-export const ChartCard: React.FC<ChartCardProps> = ({ title, icon: Icon, children }) => {
+export const ChartCard: React.FC<ChartCardProps> = React.memo(({ title, icon: Icon, children }) => {
   return (
-    <Card className="shadow-lg">
-      <CardHeader>
-        <CardTitle className="flex items-center space-x-2">
-          <Icon className="h-5 w-5 text-indigo-600" />
-          <span className="text-black">{title}</span>
+    <Card className="shadow-xl border-0 bg-white/70 backdrop-blur-sm">
+      <CardHeader className="bg-gradient-to-r from-indigo-50 to-purple-50 rounded-t-lg">
+        <CardTitle className="flex items-center space-x-3">
+          <div className="bg-gradient-to-r from-indigo-500 to-purple-600 p-2 rounded-lg">
+            <Icon className="h-5 w-5 text-white" />
+          </div>
+          <span className="text-xl font-bold text-gray-900">{title}</span>
         </CardTitle>
       </CardHeader>
-      <CardContent>
+      <CardContent className="p-6">
         {children}
       </CardContent>
     </Card>
   );
-}; 
+}); 

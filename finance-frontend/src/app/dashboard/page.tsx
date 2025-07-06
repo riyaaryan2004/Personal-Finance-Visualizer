@@ -3,7 +3,6 @@
 import React, { useEffect, useState, useMemo, useCallback } from 'react';
 import { 
   TrendingUp, 
-  DollarSign, 
   CreditCard, 
   Target,
   BarChart3,
@@ -66,48 +65,60 @@ const Dashboard = () => {
     loadData();
   }, [loadData]);
 
-  // Filter transactions by selected month
+  // Filter transactions by selected month - optimized with early return
   const filteredTransactions = useMemo(() => {
-    if (!selectedMonth) return transactions;
+    if (!selectedMonth || transactions.length === 0) return transactions;
     
     const [year, month] = selectedMonth.split('-');
+    const yearNum = parseInt(year);
+    const monthNum = parseInt(month) - 1;
+    
     return transactions.filter(transaction => {
       const transactionDate = new Date(transaction.date);
-      return transactionDate.getFullYear() === parseInt(year) && 
-             transactionDate.getMonth() === parseInt(month) - 1;
+      return transactionDate.getFullYear() === yearNum && 
+             transactionDate.getMonth() === monthNum;
     });
   }, [transactions, selectedMonth]);
 
-  // Transform backend data to chart format - include all categories even with 0 expenses
+  // Transform backend data to chart format - optimized with Map for better performance
   const categoryData = useMemo(() => {
-    const breakdown: { [key: string]: number } = {};
+    if (filteredTransactions.length === 0) {
+      return CATEGORIES.map(cat => ({ category: cat.name, amount: 0 }));
+    }
+    
+    const breakdown = new Map<string, number>();
     
     // Initialize all categories with 0
     CATEGORIES.forEach(cat => {
-      breakdown[cat.name] = 0;
+      breakdown.set(cat.name, 0);
     });
     
     // Add actual transaction amounts
-    filteredTransactions.forEach(transaction => {
-      breakdown[transaction.category] = (breakdown[transaction.category] || 0) + transaction.amount;
-    });
+    for (const transaction of filteredTransactions) {
+      const current = breakdown.get(transaction.category) || 0;
+      breakdown.set(transaction.category, current + transaction.amount);
+    }
     
-    return Object.entries(breakdown).map(([category, amount]) => ({
+    return Array.from(breakdown.entries()).map(([category, amount]) => ({
       category,
       amount
     }));
   }, [filteredTransactions]);
 
   const recentTransactions = useMemo(() => {
-    return filteredTransactions
-      .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
-      .slice(0, 5)
-      .map(transaction => ({
-        amount: transaction.amount,
-        category: transaction.category,
-        date: transaction.date,
-        description: transaction.description || 'No description'
-      }));
+    if (filteredTransactions.length === 0) return [];
+    
+    // Use a more efficient sorting approach
+    const sorted = [...filteredTransactions].sort((a, b) => 
+      new Date(b.date).getTime() - new Date(a.date).getTime()
+    );
+    
+    return sorted.slice(0, 5).map(transaction => ({
+      amount: transaction.amount,
+      category: transaction.category,
+      date: transaction.date,
+      description: transaction.description || 'No description'
+    }));
   }, [filteredTransactions]);
 
   const budgetData = useMemo(() => {
@@ -190,7 +201,7 @@ const Dashboard = () => {
     {
       title: 'Total Expenses',
       value: formatCurrency(total),
-      icon: DollarSign,
+      icon: CreditCard,
       gradient: 'bg-gradient-to-r from-indigo-500 via-purple-500 to-indigo-600',
       iconBgColor: 'bg-white/20',
       subtitle: 'This month'

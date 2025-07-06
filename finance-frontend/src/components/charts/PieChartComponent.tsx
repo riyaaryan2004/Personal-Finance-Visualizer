@@ -9,7 +9,7 @@ interface PieChartComponentProps {
   data: CategoryData[];
 }
 
-export const PieChartComponent: React.FC<PieChartComponentProps> = ({ data }) => {
+export const PieChartComponent: React.FC<PieChartComponentProps> = React.memo(({ data }) => {
   return (
     <ResponsiveContainer width="100%" height={350}>
       <PieChart>
@@ -33,4 +33,4 @@ export const PieChartComponent: React.FC<PieChartComponentProps> = ({ data }) =>
       </PieChart>
     </ResponsiveContainer>
   );
-}; 
+}); 
